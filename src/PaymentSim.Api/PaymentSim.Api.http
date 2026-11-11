@@ -1,0 +1,6 @@
+@PaymentSim.Api_HostAddress = http://localhost:5185
+
+GET {{PaymentSim.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

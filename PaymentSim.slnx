@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/MerchantReceiver/MerchantReceiver.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/PaymentSim.Api/PaymentSim.Api.csproj" />
+    <Project Path="src/PaymentSim.Core/PaymentSim.Core.csproj" />
+    <Project Path="src/PaymentSim.Infrastructure/PaymentSim.Infrastructure.csproj" />
+    <Project Path="src/PaymentSim.Signing/PaymentSim.Signing.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PaymentSim.Tests/PaymentSim.Tests.csproj" />
+  </Folder>
+</Solution>
