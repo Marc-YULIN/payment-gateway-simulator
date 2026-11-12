@@ -1,6 +1,22 @@
-@MerchantReceiver_HostAddress = http://localhost:5263
+@baseUrl = http://localhost:5112
 
-GET {{MerchantReceiver_HostAddress}}/weatherforecast/
-Accept: application/json
+### Pay-in: first callback fails verification, then retry succeeds
+POST {{baseUrl}}/checkout
+Content-Type: application/json
 
-###
+{"amount":12.50,"currency":"USD","scenario":"bad-signature"}
+
+### Duplicate notifications
+POST {{baseUrl}}/checkout
+Content-Type: application/json
+
+{"amount":12.50,"currency":"USD","scenario":"duplicate:3"}
+
+### Payout with reversed notifications
+POST {{baseUrl}}/payout
+Content-Type: application/json
+
+{"amount":10.00,"currency":"USD","bankCode":"DEMO","accountNo":"00001234","accountName":"Sample Person","scenario":"out-of-order"}
+
+### Local state and notification outcomes
+GET {{baseUrl}}/orders

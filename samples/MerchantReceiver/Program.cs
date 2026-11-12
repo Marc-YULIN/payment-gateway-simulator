@@ -1,41 +1,24 @@
+using MerchantReceiver;
+
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Logging.ClearProviders().AddSimpleConsole();
 builder.Services.AddOpenApi();
-
+builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = context => context.ProblemDetails.Extensions.TryAdd("code", "9999"));
+builder.Services.AddHealthChecks();
+builder.Services.AddOptions<GatewayOptions>().BindConfiguration("Gateway").ValidateDataAnnotations()
+    .Validate(o => o.Scheme is "HMAC-SHA256" or "MD5" or "RSA-SHA256", "Unsupported signature scheme.")
+    .Validate(o => o.Scheme == "RSA-SHA256" ? File.Exists(o.PrivateKeyPemPath) && File.Exists(o.GatewayPublicKeyPemPath)
+        : !string.IsNullOrEmpty(o.SharedSecret), "Signing credentials are required.").ValidateOnStart();
+builder.Services.AddOptions<ReceiverOptions>().BindConfiguration("").ValidateDataAnnotations().ValidateOnStart();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHttpClient("gateway", c => c.Timeout = TimeSpan.FromSeconds(10))
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+builder.Services.AddSingleton<Receiver>();
+builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 64 * 1024);
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
+app.UseExceptionHandler();
+app.MapOpenApi();
+app.MapHealthChecks("/health");
+app.MapReceiver();
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public partial class Program;
