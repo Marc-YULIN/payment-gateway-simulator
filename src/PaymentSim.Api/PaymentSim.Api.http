@@ -1,6 +1,49 @@
-@PaymentSim.Api_HostAddress = http://localhost:5185
+@baseUrl = http://localhost:5102
+@adminKey = dev-admin-key
+# Sign the exact scalar fields with PaymentSim.Signing before sending gateway requests.
+# Obtain a fresh Unix timestamp and nonce for EVERY request, including idempotent retries.
+@timestamp = 0
+@nonce = replace-with-fresh-nonce
+@sign = replace-with-computed-signature
 
-GET {{PaymentSim.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Pay-in; choose normal, delay:3,duplicate:2, out-of-order, bad-signature, no-callback or decline
+POST {{baseUrl}}/gateway/payin
+Content-Type: application/json
 
-###
+{"merchantId":"M1001","merchantOrderNo":"demo-payin-1","amount":"12.50","currency":"USD","notifyUrl":"http://localhost:5112/payments/notify","scenario":"bad-signature","timestamp":"{{timestamp}}","nonce":"{{nonce}}","sign":"{{sign}}"}
+
+### Payout
+POST {{baseUrl}}/gateway/payout
+Content-Type: application/x-www-form-urlencoded
+
+merchantId=M1001&merchantOrderNo=demo-payout-1&amount=10.00&currency=USD&notifyUrl=http%3A%2F%2Flocalhost%3A5112%2Fpayments%2Fnotify&bankCode=DEMO&accountNo=00001234&accountName=Sample%20Person&timestamp={{timestamp}}&nonce={{nonce}}&sign={{sign}}
+
+### Signed query
+POST {{baseUrl}}/gateway/query
+Content-Type: application/json
+
+{"merchantId":"M1001","merchantOrderNo":"demo-payin-1","timestamp":"{{timestamp}}","nonce":"{{nonce}}","sign":"{{sign}}"}
+
+### Orders
+GET {{baseUrl}}/admin/api/orders
+X-Admin-Key: {{adminKey}}
+
+### Delivery journal
+GET {{baseUrl}}/admin/api/callbacks?outcome=Rejected
+X-Admin-Key: {{adminKey}}
+
+### Top up synthetic funds
+POST {{baseUrl}}/admin/api/merchants/M1001/balance
+X-Admin-Key: {{adminKey}}
+Content-Type: application/json
+
+{"currency":"USD","amount":100}
+
+### Create and sign through the merchant sample
+POST http://localhost:5112/checkout
+Content-Type: application/json
+
+{"amount":12.50,"currency":"USD","scenario":"delay:3,duplicate:2"}
+
+### Health
+GET {{baseUrl}}/health

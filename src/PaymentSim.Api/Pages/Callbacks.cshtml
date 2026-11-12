@@ -1,0 +1,30 @@
+@page "/admin/callbacks"
+@model PaymentSim.Api.Pages.CallbacksModel
+@{ Layout = null; }
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" />
+<title>Callback delivery journal</title><link rel="stylesheet" href="/css/site.css" /></head>
+<body><main class="wide"><p class="eyebrow">SAMPLE PAY · OPERATIONS</p><h1>Callback delivery journal</h1>
+<label>Outcome <select id="outcome"><option value="">All</option><option>Acknowledged</option><option>Rejected</option><option>Error</option></select></label>
+<p id="status" role="status">Loading…</p>
+<div class="scroll"><table><thead><tr><th>Order</th><th>Attempt</th><th>HTTP</th><th>Duration</th><th>Outcome</th><th>Sent at</th></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="muted">Refreshes every five seconds. Latest 200 attempts.</p></main>
+<script>
+const key = new URLSearchParams(location.search).get('key');
+async function refresh() {
+    try {
+        const response = await fetch('/admin/api/callbacks?outcome=' + encodeURIComponent(document.getElementById('outcome').value), { headers: { 'X-Admin-Key': key }});
+        if (!response.ok) throw new Error('Request failed');
+        const rows = await response.json();
+        document.getElementById('rows').replaceChildren(...rows.map(row => {
+            const tr = document.createElement('tr');
+            for (const value of [row.orderNo, row.attemptNo, row.httpStatus ?? '—', row.durationMs + ' ms', row.outcome, row.sentAt]) {
+                const td = document.createElement('td'); td.textContent = value; tr.append(td);
+            }
+            return tr;
+        }));
+        document.getElementById('status').textContent = rows.length + ' delivery attempts';
+    } catch { document.getElementById('status').textContent = 'Unable to load delivery attempts.'; }
+}
+document.getElementById('outcome').addEventListener('change', refresh);
+refresh(); setInterval(refresh, 5000);
+</script></body></html>

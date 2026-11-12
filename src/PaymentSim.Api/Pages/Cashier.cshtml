@@ -1,0 +1,35 @@
+@page "/cashier/{orderNo}"
+@model PaymentSim.Api.Pages.CashierModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" />
+<title>Sample Pay cashier</title><link rel="stylesheet" href="/css/site.css" /></head>
+<body><main><p class="eyebrow">SAMPLE PAY · SANDBOX</p><h1>Complete your payment</h1>
+<p>Merchant: <strong>@Model.MerchantName</strong></p>
+<p class="amount">@Model.Order.Amount.ToString("F2") @Model.Order.Currency</p>
+<p>Order: <code>@Model.Order.OrderNo</code></p><p>Status: <strong>@Model.Order.Status</strong></p>
+<p>Expires in <span id="countdown" data-expires="@Model.Order.ExpiresAt.ToUnixTimeMilliseconds()"></span></p>
+@if (Model.Order.Status == PaymentSim.Core.OrderStatus.Pending)
+{
+<form method="post">@Html.AntiForgeryToken()
+<button type="submit" name="success" value="true">Pay successfully</button>
+<button type="submit" name="success" value="false" class="secondary">Fail payment</button>
+<button type="button" class="secondary" onclick="this.closest('form').hidden = true">Let it expire</button>
+</form>
+}
+@if (Model.Order.ReturnUrl is not null)
+{
+<p><a href="@Model.Order.ReturnUrl" rel="noreferrer">Return to merchant</a></p>
+}
+<p class="muted">Synthetic funds only. No real payment is processed.</p></main>
+<script>
+const countdown = document.getElementById('countdown');
+function tick() {
+    const seconds = Math.max(0, Math.ceil((Number(countdown.dataset.expires) - Date.now()) / 1000));
+    countdown.textContent = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+    if (seconds === 0) document.querySelectorAll('button[type=submit]').forEach(b => b.disabled = true);
+}
+tick(); setInterval(tick, 1000);
+</script></body></html>
