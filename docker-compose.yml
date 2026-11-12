@@ -1,0 +1,25 @@
+services:
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:5102:5102"
+    environment:
+      Simulator__PublicBaseUrl: http://localhost:5102
+    volumes:
+      - simulator-data:/app/appdata
+  merchant:
+    build:
+      context: .
+      dockerfile: samples/MerchantReceiver/Dockerfile
+    ports:
+      - "127.0.0.1:5112:5112"
+    environment:
+      Gateway__BaseUrl: http://simulator:5102
+      PublicBaseUrl: http://merchant:5112
+    depends_on:
+      - simulator
+
+volumes:
+  simulator-data:
