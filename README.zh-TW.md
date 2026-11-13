@@ -6,11 +6,11 @@
 
 使用虛構資料測試簽章、付款狀態機與不可靠的回呼通知，全程不移動真實款項。
 
-## Background
+## 背景
 
 本專案萃取自我在正式環境建置與維運金流／會員平台的實務模式，採獨立重新實作，並完全使用合成資料。
 
-## Features
+## 功能
 
 - 代收 API、本機收銀台、代付款項保留與失敗回補、具簽章的訂單查詢。
 - 可重用的 MD5、HMAC-SHA256、RSA-SHA256 簽章函式庫，接受 JSON 與表單請求。
@@ -19,7 +19,17 @@
 - 商戶範例驗證回應與通知簽章、辨識重複通知，並保護終態。
 - 本機通知紀錄頁、管理金鑰保護、OpenAPI 與 Scalar 介面。
 
-## Architecture
+## 畫面截圖
+
+<img src="docs/images/cashier.png" alt="模擬收銀台">
+
+*模擬收銀台*
+
+<img src="docs/images/callback-journal.png" alt="回呼紀錄：壞簽章第 1 次被拒、重送成功，以及重複送達">
+
+*回呼紀錄：壞簽章第 1 次被拒、重送成功，以及重複送達*
+
+## 架構
 
 ```mermaid
 flowchart LR
@@ -38,11 +48,11 @@ flowchart LR
 
 [架構文件](docs/architecture.md) 包含時序、狀態與資料模型圖。
 
-## Tech Stack
+## 技術組成
 
 .NET 10、ASP.NET Core Minimal APIs 與 Razor Pages、EF Core／SQLite、內建密碼學、xUnit、NSubstitute、整合測試工廠 (WebApplicationFactory)。不需要外部前端素材或服務。
 
-## Getting Started
+## 快速開始
 
 使用 SDK 鎖定檔指定的版本，從專案根目錄執行：
 
@@ -66,7 +76,7 @@ docker compose up --build
 
 閘道位於 `http://localhost:5102`，商戶位於 `http://localhost:5112`。建立訂單前先確認兩端的 `/health`。閘道的 `/scalar` 提供互動文件，`/openapi/v1.json` 提供契約；商戶也提供 `/openapi/v1.json`。
 
-## Configuration
+## 設定
 
 環境變數以 `__` 取代 `:`。預設值全部是沙箱用虛構憑證。
 
@@ -93,7 +103,7 @@ docker compose up --build
 
 沙箱允許包含本機服務的 HTTP 通知網址，請只在可信任的開發環境執行。管理 API 使用 `X-Admin-Key`；紀錄頁為示範用途使用 `?key=`，會留在瀏覽器歷史紀錄。請使用虛構金鑰，不要使用正式憑證。資料庫與私鑰屬於未加密的本機沙箱資料。收銀台防偽金鑰保存在初始金鑰目錄的 `data-protection` 子目錄，避免依賴作業系統使用者設定檔。這些檔案不應納入版本控制。
 
-## API Walkthrough
+## API 操作範例
 
 以下採 Bash 引號與 `curl`；PowerShell 請使用 `curl.exe`。商戶範例負責簽署閘道請求與驗證回應，無須手算簽章。
 
@@ -167,7 +177,7 @@ src/PaymentSim.Api/PaymentSim.Api.http
 
 閘道回應皆為 JSON，成功回應與已知商戶錯誤包含簽章。錯誤採 ProblemDetails，頂層擴充包含錯誤碼 (code) 與訊息 (message)。未知商戶或無法解析的請求無法提供商戶簽章。錯誤碼：`1001` 驗證失敗（401）、`1002` 時間戳逾時（401）、`1003` 重放（409）、`2001` 商戶單號衝突（409）、`3001` 餘額不足（422）、`9999` 驗證／查無資料／其他錯誤（400／404 或相應狀態）。
 
-## Design Decisions
+## 設計取捨
 
 1. **待送匣、原子領取與租約。** 狀態轉換、回補與通知新增共用一個資料庫交易。每輪條件更新最多領取 20 筆，租約為 30 秒，唯一租約識別碼阻止舊工作者回寫結果。當機後可回收租約；派送保證至少一次，若接收端已提交而送出端尚未記錄成功便當機，仍可能重複通知。領取時即保留嘗試編號，因此當機可能使紀錄編號出現缺口。
 2. **明確確認字串。** 只有 HTTP 200 且去除前後空白後、不分大小寫等於 `success` 才視為送達。重新導向、其他狀態碼與其他文字皆重試；HTTP 成功不等於業務處理完成。HTTP 逾時十秒，回應紀錄上限 500 字元。
@@ -178,7 +188,7 @@ src/PaymentSim.Api/PaymentSim.Api.http
 7. **精確金額儲存。** 核心使用十進位數值，SQLite 以放大 10⁴ 倍的整數存金額，讓 SQL 排序與運算保持精確，避免浮點誤差與文字排序。API 金額限正數、最多兩位小數、單筆上限十億，不做匯率換算。UTC 時間也以整數 ticks 儲存，以利 SQLite 範圍查詢。
 8. **維運範圍刻意縮小。** 資料庫初始化方法 (EnsureCreatedAsync) 建立 SQLite，不使用 migrations。訂單背景工作每秒檢查代付、每 30 秒檢查代收到期；代收期限 15 分鐘。每輪限制處理筆數。這是本機異常測試工具，不是真實收付款系統或具商戶登入的入口。
 
-## Testing
+## 測試
 
 ```sh
 dotnet build PaymentSim.slnx --no-restore
@@ -187,7 +197,7 @@ dotnet test PaymentSim.slnx --no-restore
 
 測試涵蓋固定簽章原文、三種方案與錯誤金鑰、全部狀態組合、情境驗證、抖動、重送與停止重送、重複通知、錯誤簽章、派送器競爭、過期租約、驗證、防重放、冪等及代付回補。手動時間提供者 (ManualTimeProvider) 控制時間；整合測試使用獨立暫存 SQLite 檔案。HTTP 通知使用自訂 handler，不連外部服務。依操作流程確認兩個實際服務與瀏覽器頁面；有 Docker 時另行建置映像。
 
-## Project Structure
+## 專案結構
 
 ```text
 src/PaymentSim.Signing/          共用簽章原文與簽章方案
@@ -199,12 +209,12 @@ tests/PaymentSim.Tests/          單元與獨立整合測試
 docs/architecture.md            元件、時序、狀態與資料模型圖
 ```
 
-## Roadmap
+## 後續規劃
 
 - 商戶範例持久化儲存及明確對帳流程。
 - 分散式防重放與更多通知異常模式。
 - 選用金鑰輪替、資料遷移與保留政策。
 
-## License
+## 授權
 
 [MIT](LICENSE)。

@@ -19,6 +19,16 @@ Distilled from patterns I built and operated in production payment / membership 
 - A merchant sample that verifies responses and callbacks, deduplicates notifications, and preserves terminal states.
 - Local callback journal, protected administration APIs, OpenAPI and Scalar UI.
 
+## Screenshots
+
+<img src="docs/images/cashier.png" alt="Sandbox cashier page">
+
+*Sandbox cashier page*
+
+<img src="docs/images/callback-journal.png" alt="Callback delivery journal: a bad signature rejected, then retried and acknowledged; duplicate deliveries">
+
+*Callback delivery journal: a bad signature rejected, then retried and acknowledged; duplicate deliveries*
+
 ## Architecture
 
 ```mermaid
