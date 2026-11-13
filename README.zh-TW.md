@@ -2,6 +2,8 @@
 
 # 第三方金流閘道模擬器
 
+[![CI](https://github.com/Marc-YULIN/payment-gateway-simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-YULIN/payment-gateway-simulator/actions/workflows/ci.yml) ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 使用虛構資料測試簽章、付款狀態機與不可靠的回呼通知，全程不移動真實款項。
 
 ## Background

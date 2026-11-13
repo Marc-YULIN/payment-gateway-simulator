@@ -2,6 +2,8 @@ English | [繁體中文](README.zh-TW.md)
 
 # Payment Gateway Simulator
 
+[![CI](https://github.com/Marc-YULIN/payment-gateway-simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-YULIN/payment-gateway-simulator/actions/workflows/ci.yml) ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 A fictional payment gateway for testing signatures, payment state machines, and unreliable callbacks without moving real money.
 
 ## Background
