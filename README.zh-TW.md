@@ -1,18 +1,18 @@
 [English](README.md) | 繁體中文
 
-# 第三方金流閘道模擬器
+# 第三方 API 回呼模擬器
 
 [![CI](https://github.com/Marc-YULIN/payment-gateway-simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/Marc-YULIN/payment-gateway-simulator/actions/workflows/ci.yml) ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
-使用虛構資料測試簽章、付款狀態機與不可靠的回呼通知，全程不移動真實款項。
+以付款閘道為示範情境，使用虛構資料測試簽章、狀態機與不可靠的回呼通知，全程不移動真實款項。
 
 ## 背景
 
-本專案萃取自我在正式環境建置與維運金流／會員平台的實務模式，採獨立重新實作，並完全使用合成資料。
+本專案萃取自我在正式環境建置與維運大型會員平台的實務模式，採獨立重新實作，並完全使用合成資料。
 
 ## 功能
 
-- 代收 API、本機收銀台、代付款項保留與失敗回補、具簽章的訂單查詢。
+- 付款 API、本機收銀台、撥款額度保留與失敗回補、具簽章的訂單查詢。
 - 可重用的 MD5、HMAC-SHA256、RSA-SHA256 簽章函式庫，接受 JSON 與表單請求。
 - 持久化待送通知、原子領取、可回收租約、派送歷史與人工重送。
 - 可組合延遲、重複、亂序、錯誤簽章、不送通知與拒絕付款情境。
@@ -35,7 +35,7 @@
 flowchart LR
     User[開發者／收銀台] --> Merchant[商戶範例 :5112]
     Merchant -->|具簽章請求| API[閘道 :5102]
-    User -->|完成代收| API
+    User -->|完成付款| API
     API --> DB[(SQLite 訂單／餘額／待送通知)]
     Worker[訂單背景工作] --> DB
     Dispatcher[通知派送器] -->|原子租約| DB
@@ -85,7 +85,7 @@ docker compose up --build
 | `ConnectionStrings:PaymentSim` | `Data Source=appdata/payment-gateway-simulator.db` | 相對於閘道內容根目錄的資料庫位置 |
 | `Simulator:AdminKey` | `dev-admin-key` | 管理標頭及紀錄頁查詢金鑰 |
 | `Simulator:PublicBaseUrl` | `http://localhost:5102` | 瀏覽器可開啟的收銀台網址 |
-| `Simulator:BackgroundWorkersEnabled` | `true` | 代付、到期及通知工作；整合測試關閉 |
+| `Simulator:BackgroundWorkersEnabled` | `true` | 撥款、到期及通知工作；整合測試關閉 |
 | `Seed:M1001Secret` | `demo-hmac-secret` | 首次建立示範資料時使用的 HMAC 密鑰 |
 | `Seed:KeyDirectory` | `appdata/keys` | 首次啟動產生並保存的 RSA 金鑰對 |
 | `Retry:BaseDelaySeconds` | `5`，開發環境為 `2` | 第一次重送的基準秒數 |
@@ -107,7 +107,7 @@ docker compose up --build
 
 以下採 Bash 引號與 `curl`；PowerShell 請使用 `curl.exe`。商戶範例負責簽署閘道請求與驗證回應，無須手算簽章。
 
-### 代收與首次通知失敗
+### 付款與首次通知失敗
 
 ```sh
 curl -sS http://localhost:5102/health
@@ -129,9 +129,9 @@ curl -sS -X POST http://localhost:5112/checkout -H 'Content-Type: application/js
 curl -sS -X POST http://localhost:5112/checkout -H 'Content-Type: application/json' -d '{"amount":12.50,"currency":"USD","scenario":"out-of-order"}'
 ```
 
-逐一完成收銀台付款。重複情境會記錄一次套用 (applied) 與兩次重複 (duplicate)。亂序代收刻意先送失敗 (Failed)，再送已付款 (Paid)；商戶保留第一個終態，將後到通知記為忽略 (ignored)。這是刻意不一致的模擬，用來說明對帳的重要性；閘道權威訂單仍可能是已付款 (Paid)。
+逐一完成收銀台付款。重複情境會記錄一次套用 (applied) 與兩次重複 (duplicate)。亂序付款刻意先送失敗 (Failed)，再送已付款 (Paid)；商戶保留第一個終態，將後到通知記為忽略 (ignored)。這是刻意不一致的模擬，用來說明對帳的重要性；閘道權威訂單仍可能是已付款 (Paid)。
 
-### 代付與退回保留款
+### 撥款與退回保留款
 
 ```sh
 curl -sS -X POST http://localhost:5112/payout -H 'Content-Type: application/json' -d '{"amount":10.00,"currency":"USD","bankCode":"DEMO","accountNo":"00001234","accountName":"Sample Person","scenario":"out-of-order"}'
@@ -140,7 +140,7 @@ curl -sS http://localhost:5102/admin/api/merchants -H 'X-Admin-Key: dev-admin-ke
 curl -sS http://localhost:5112/orders
 ```
 
-等候約五秒。第一筆代付先完成為成功 (Succeeded)，後送的處理中 (Processing) 通知會被忽略。拒絕的代付成為已拒絕 (Rejected)，並退回保留款。正常代付約兩秒後通知處理中 (Processing)，再過約兩秒通知成功 (Succeeded)。
+等候約五秒。第一筆撥款先完成為成功 (Succeeded)，後送的處理中 (Processing) 通知會被忽略。拒絕的撥款成為已拒絕 (Rejected)，並退回保留款。正常撥款約兩秒後通知處理中 (Processing)，再過約兩秒通知成功 (Succeeded)。
 
 ### 其他情境與管理
 
@@ -151,7 +151,7 @@ curl -sS http://localhost:5112/orders
 | `bad-signature` | 每筆待送通知的首次嘗試簽章損壞，重送正常 |
 | `out-of-order` | 合成亂序狀態快照 |
 | `no-callback` | 不送通知，改用簽章查詢 `/gateway/query` 對帳 |
-| `decline` | 代收於收銀台完成時失敗；代付直接拒絕 |
+| `decline` | 付款於收銀台完成時失敗；撥款直接拒絕 |
 
 延遲接受 0–86400 秒，份數接受 1–20；重複選項或格式錯誤會被拒絕。`X-Sim-Scenario` 可覆蓋已簽章內文的情境，以注入沙箱異常。人工重送會略過情境抑制與簽章破壞，只送一次目前狀態。
 
@@ -182,11 +182,11 @@ src/PaymentSim.Api/PaymentSim.Api.http
 1. **待送匣、原子領取與租約。** 狀態轉換、回補與通知新增共用一個資料庫交易。每輪條件更新最多領取 20 筆，租約為 30 秒，唯一租約識別碼阻止舊工作者回寫結果。當機後可回收租約；派送保證至少一次，若接收端已提交而送出端尚未記錄成功便當機，仍可能重複通知。領取時即保留嘗試編號，因此當機可能使紀錄編號出現缺口。
 2. **明確確認字串。** 只有 HTTP 200 且去除前後空白後、不分大小寫等於 `success` 才視為送達。重新導向、其他狀態碼與其他文字皆重試；HTTP 成功不等於業務處理完成。HTTP 逾時十秒，回應紀錄上限 500 字元。
 3. **指數退避加抖動。** 延遲為 `base × 2^(attempt−1) × random(0.8,1.2)`，加抖動後再套上限，避免同步重送。預設最多八次；耗盡後停止重送，但保留紀錄供查核。
-4. **冪等與狀態單調性。** 閘道以商戶及商戶單號組合作為唯一鍵，相同參數回原單，參數衝突回 409。代付保留款使用交易與餘額版本，最多重試三次衝突。商戶範例以鎖保護單號、狀態組合的去重與狀態更新，採記憶體並行字典 (ConcurrentDictionary)，重啟會遺失資料。正式接收端必須使用持久化交易與唯一索引，並對互相矛盾的終態進行對帳。
+4. **冪等與狀態單調性。** 閘道以商戶及商戶單號組合作為唯一鍵，相同參數回原單，參數衝突回 409。撥款保留款使用交易與餘額版本，最多重試三次衝突。商戶範例以鎖保護單號、狀態組合的去重與狀態更新，採記憶體並行字典 (ConcurrentDictionary)，重啟會遺失資料。正式接收端必須使用持久化交易與唯一索引，並對互相矛盾的終態進行對帳。
 5. **防重放。** 已簽章時間戳允許前後 300 秒，商戶各自的 nonce 快取十分鐘。這是單一程序沙箱，不是分散式防重放儲存；重啟會忘記 nonce。
 6. **簽章相容性。** MD5 僅供舊協定相容，不適合新系統；預設採 HMAC-SHA256。RSA 使用獨立商戶與閘道金鑰對、SHA-256 及 PKCS#1 v1.5。簽章使用固定時間比較，RSA 驗證完整填補與 SHA-256 DigestInfo。憑證不出現在 log 或管理查詢結果。
 7. **精確金額儲存。** 核心使用十進位數值，SQLite 以放大 10⁴ 倍的整數存金額，讓 SQL 排序與運算保持精確，避免浮點誤差與文字排序。API 金額限正數、最多兩位小數、單筆上限十億，不做匯率換算。UTC 時間也以整數 ticks 儲存，以利 SQLite 範圍查詢。
-8. **維運範圍刻意縮小。** 資料庫初始化方法 (EnsureCreatedAsync) 建立 SQLite，不使用 migrations。訂單背景工作每秒檢查代付、每 30 秒檢查代收到期；代收期限 15 分鐘。每輪限制處理筆數。這是本機異常測試工具，不是真實收付款系統或具商戶登入的入口。
+8. **維運範圍刻意縮小。** 資料庫初始化方法 (EnsureCreatedAsync) 建立 SQLite，不使用 migrations。訂單背景工作每秒檢查撥款、每 30 秒檢查付款到期；付款期限 15 分鐘。每輪限制處理筆數。這是本機異常測試工具，不是真實交易系統或具商戶登入的入口。
 
 ## 測試
 
@@ -195,7 +195,7 @@ dotnet build PaymentSim.slnx --no-restore
 dotnet test PaymentSim.slnx --no-restore
 ```
 
-測試涵蓋固定簽章原文、三種方案與錯誤金鑰、全部狀態組合、情境驗證、抖動、重送與停止重送、重複通知、錯誤簽章、派送器競爭、過期租約、驗證、防重放、冪等及代付回補。手動時間提供者 (ManualTimeProvider) 控制時間；整合測試使用獨立暫存 SQLite 檔案。HTTP 通知使用自訂 handler，不連外部服務。依操作流程確認兩個實際服務與瀏覽器頁面；有 Docker 時另行建置映像。
+測試涵蓋固定簽章原文、三種方案與錯誤金鑰、全部狀態組合、情境驗證、抖動、重送與停止重送、重複通知、錯誤簽章、派送器競爭、過期租約、驗證、防重放、冪等及撥款回補。手動時間提供者 (ManualTimeProvider) 控制時間；整合測試使用獨立暫存 SQLite 檔案。HTTP 通知使用自訂 handler，不連外部服務。依操作流程確認兩個實際服務與瀏覽器頁面；有 Docker 時另行建置映像。
 
 ## 專案結構
 
