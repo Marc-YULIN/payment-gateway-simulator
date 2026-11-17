@@ -30,7 +30,7 @@ public sealed class Receiver(IHttpClientFactory clients, IOptions<GatewayOptions
     public async Task<IResult> CreateAsync(CheckoutRequest request, PayoutRequest? payout, CancellationToken cancellationToken)
     {
         if (request.Amount <= 0 || request.Amount > 1_000_000_000m || decimal.Round(request.Amount, 2) != request.Amount ||
-            request.Currency is not ("KRW" or "USD"))
+            request.Currency is not ("TWD" or "USD"))
             return Results.Problem(statusCode: 400, detail: "Invalid amount or currency.", extensions: new Dictionary<string, object?> { ["code"] = "invalid_order" });
         var merchantOrderNo = "DEMO-" + Guid.NewGuid().ToString("N");
         var local = new LocalOrder(merchantOrderNo, request.Amount, request.Currency, payout is null ? "PayIn" : "Payout");

@@ -99,7 +99,7 @@ docker compose up --build
 | 商戶 `Gateway:GatewayPublicKeyPemPath` | null | 驗證閘道回應／通知的 RSA 公鑰檔 |
 | 商戶 `PublicBaseUrl` | `http://localhost:5112` | 通知來源網址；Compose 使用 `http://merchant:5112` |
 
-初始商戶：`M1001` 使用 HMAC 與表單通知；`M1002` 使用 MD5、密鑰 `demo-md5-secret` 與 JSON 通知；`M1003` 使用 RSA 與表單通知。每家各有 `100000.00` USD 與 KRW。切換 RSA 時，修改商戶識別碼、方案，並將兩個 PEM 設定指向閘道金鑰目錄內的 `merchant-private.pem` 與 `gateway-public.pem`。初次建立資料時只記錄商戶私鑰的**檔案路徑**，不記錄金鑰內容。Compose 使用 RSA 時，須自行將金鑰唯讀掛載至商戶容器。
+初始商戶：`M1001` 使用 HMAC 與表單通知；`M1002` 使用 MD5、密鑰 `demo-md5-secret` 與 JSON 通知；`M1003` 使用 RSA 與表單通知。每家各有 `100000.00` USD 與 TWD。切換 RSA 時，修改商戶識別碼、方案，並將兩個 PEM 設定指向閘道金鑰目錄內的 `merchant-private.pem` 與 `gateway-public.pem`。初次建立資料時只記錄商戶私鑰的**檔案路徑**，不記錄金鑰內容。Compose 使用 RSA 時，須自行將金鑰唯讀掛載至商戶容器。
 
 沙箱允許包含本機服務的 HTTP 通知網址，請只在可信任的開發環境執行。管理 API 使用 `X-Admin-Key`；紀錄頁為示範用途使用 `?key=`，會留在瀏覽器歷史紀錄。請使用虛構金鑰，不要使用正式憑證。資料庫與私鑰屬於未加密的本機沙箱資料。收銀台防偽金鑰保存在初始金鑰目錄的 `data-protection` 子目錄，避免依賴作業系統使用者設定檔。這些檔案不應納入版本控制。
 

@@ -33,7 +33,7 @@ public sealed class DemoSeeder(PaymentSimDbContext db, IOptions<SeedOptions> opt
             new Merchant { Id = "M1003", Name = "Demo Store", SignScheme = "RSA-SHA256", MerchantPublicKeyPem = merchant.ExportSubjectPublicKeyInfoPem(),
                 GatewayPrivateKeyPem = gatewayPrivate, GatewayPublicKeyPem = gateway.ExportSubjectPublicKeyInfoPem() });
         foreach (var id in new[] { "M1001", "M1002", "M1003" })
-            foreach (var currency in new[] { "KRW", "USD" })
+            foreach (var currency in new[] { "TWD", "USD" })
                 db.Balances.Add(new MerchantBalance { MerchantId = id, Currency = currency, Available = 100000m });
         await db.SaveChangesAsync(cancellationToken);
         var merchantKeyPath = Path.GetFullPath(Path.Combine(options.Value.KeyDirectory, "merchant-private.pem"));

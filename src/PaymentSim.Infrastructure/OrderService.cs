@@ -163,11 +163,11 @@ public sealed class OrderService(PaymentSimDbContext db, CallbackScheduler sched
     private static void Validate(CreateOrderRequest r, OrderType type)
     {
         if (string.IsNullOrWhiteSpace(r.MerchantOrderNo) || r.MerchantOrderNo.Length > 100 || r.Amount <= 0 ||
-            r.Amount > 1_000_000_000m || decimal.Round(r.Amount, 2) != r.Amount || r.Currency is not ("KRW" or "USD") ||
+            r.Amount > 1_000_000_000m || decimal.Round(r.Amount, 2) != r.Amount || r.Currency is not ("TWD" or "USD") ||
             !IsHttpUrl(r.NotifyUrl) || (r.ReturnUrl is not null && !IsHttpUrl(r.ReturnUrl)) ||
             (type == OrderType.Payout && (r.Payee is null || string.IsNullOrWhiteSpace(r.Payee.BankCode) ||
                 string.IsNullOrWhiteSpace(r.Payee.AccountNo) || string.IsNullOrWhiteSpace(r.Payee.AccountName))))
-            throw new PaymentException("9999", "Invalid order fields; use a positive amount with at most two decimals and KRW or USD.", 400);
+            throw new PaymentException("9999", "Invalid order fields; use a positive amount with at most two decimals and TWD or USD.", 400);
     }
 
     public static bool IsHttpUrl(string value) => Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
